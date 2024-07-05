@@ -18,6 +18,7 @@ STATUS_COLUMN = "Status1"  # Nome da coluna de status
 EMAIL_COLUMN = "Seu email"  # Nome da coluna de email
 ID_THRESHOLD = 4761
 parcela = "12x de R$ 159,00"
+
 def obter_dados_google_sheets():
     creds = None
     if os.path.exists("token.json"):
@@ -58,20 +59,20 @@ def verificar_mudancas(df_antigo, df_novo):
 
 def main():
     print("Iniciando o script...")
-    
+
     df_antigo = None
     if os.path.exists("estado_antigo.pkl"):
         with open("estado_antigo.pkl", "rb") as f:
             df_antigo = pickle.load(f)
-    
+
     df_novo = obter_dados_google_sheets()
     if df_novo is not None:
         print(f"Dados obtidos: {df_novo.shape[0]} registros antes da filtragem.")
-        
+
         df_novo = df_novo[pd.to_numeric(df_novo[ID_COLUMN], errors='coerce').notna()]
         df_novo[ID_COLUMN] = df_novo[ID_COLUMN].astype(int)
         df_novo = df_novo[df_novo[ID_COLUMN] >= ID_THRESHOLD]
-        
+
         print(f"Dados obtidos: {df_novo.shape[0]} registros após filtragem.")
 
         mudancas = verificar_mudancas(df_antigo, df_novo)
@@ -83,7 +84,7 @@ def main():
             nome_cliente = linha["Nome Completo"]
             cpf_cliente = linha["CPF"]
             id_cliente = linha[ID_COLUMN]
-            codigo_card = linha["Código"] 
+            codigo_card = linha["Código"]
             nome_consultor = linha["Seu nome completo"]
             valor_liberado = linha["Valor liberado"]
             data_vencimento = linha["Data 1 vencimento"]
@@ -93,7 +94,11 @@ def main():
             print(f"Email enviado para {email} sobre a mudança de status.")
         with open("estado_antigo.pkl", "wb") as f:
             pickle.dump(df_novo, f)
-schedule.every(10).minutes.do(main)
+
 while True:
-    schedule.run_pending()
-    time.sleep(5)
+    main()
+    print("")
+    print("###############################################################")
+    print("#       Aperte ENTER para realizar uma nova verificação.      #")
+    print("###############################################################")
+    input()
